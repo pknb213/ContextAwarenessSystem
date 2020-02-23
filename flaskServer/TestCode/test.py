@@ -88,7 +88,8 @@ import pymysql
 from sqlalchemy import create_engine
 
 pymysql.install_as_MySQLdb()
-engine = create_engine("mysql+mysqldb://user:"+"1234"+"@localhost/test2", encoding='utf-8')
+# engine = create_engine("mysql+mysqldb://user:"+"1234"+"@localhost/test2", encoding='utf-8')
+engine = create_engine("mysql+mysqldb://inventory_admin:"+"nrmk2013"+"@13.209.42.91/indycare", encoding='utf-8')
 conn = engine.connect()
 
 numCores = mp.cpu_count()
@@ -198,7 +199,8 @@ def read_mongo(db, collection, query={}, host='localhost', port='27017', user=No
 
 def main(host='localhost', port=8086):
     filename = "Ysang"
-    path = 'C:\\Users\\CheonYoungJo\\Downloads\\%s.log' % filename
+    # path = 'C:\\Users\\CheonYoungJo\\Downloads\\%s.log' % filename
+    path = '.\\%s.log' % filename
     res = {}
     with open(path, 'r') as logData:
         print(logData, " Core Num:", numCores)
@@ -330,3 +332,5 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     main(host=args.host, port=args.port)
+
+

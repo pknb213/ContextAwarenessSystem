@@ -11,7 +11,8 @@ from sqlalchemy import create_engine
 from multiprocessing import Process, Pool, cpu_count
 
 pymysql.install_as_MySQLdb()
-engine = create_engine("mysql+mysqldb://user:" + "1234" + "@localhost/test2",pool_recycle=300, encoding='utf-8')
+# engine = create_engine("mysql+mysqldb://user:" + "1234" + "@localhost/test2",pool_recycle=300, encoding='utf-8')
+engine = create_engine("mysql+mysqldb://inventory_admin:"+"nrmk2013"+"@13.209.42.91/indycare", encoding='utf-8')
 conn = engine.connect()
 
 
@@ -88,8 +89,10 @@ def timer(start):
 
 def writeFunc():
     filename = "Ysang"
-    path = 'C:\\Users\\CheonYoungJo\\Downloads\\%s.log' % filename
+    # path = 'C:\\Users\\CheonYoungJo\\Downloads\\%s.log' % filename
+    path = '.\\%s.log' % filename
     res = {}
+    now = datetime.datetime.now()
     with open(path, 'r') as logData:
         denominator = len(logData.readlines())
         numerator = 0
@@ -107,8 +110,10 @@ def writeFunc():
                 per = round((numerator / denominator), 2) * 100
                 # print(numerator, denominator, numerator / denominator, round(numerator / denominator, 2), per)
                 if per >= perLimit and per != 0:
-                    break
+                    # break
                     print("현재 ", per, "% 진행 중 입니다. ")
+                    if per == 100:
+                        print("DataFrame 생성완료 되었습니다.", datetime.datetime.now() - now)
                     perLimit += 5
                     time.sleep(0.1)
                 key = c.split('=')[0]
@@ -127,35 +132,41 @@ def writeFunc():
 
     df = pd.DataFrame.from_dict(res, orient='index')
     df_len = len(df)
-    quotient = df_len // 10
-    remainder = df_len % 10
+    quotient = df_len // 20
+    remainder = df_len % 20
     print(df_len, quotient, remainder)
-    now = datetime.datetime.now()
-    print(now)
+    print(datetime.datetime.now() - now, " from_dict 완료.")
 
     """ Basic Division Method (x/11)"""
     st = 0
     ed = quotient
     flag = True
-    ct = 9
-    while ct:
-        now = datetime.datetime.now()
-        while flag:
-            df.to_sql('testdb01', engine, if_exists='replace', chunksize=10)
-            # print(df[st:ed], datetime.datetime.now() - now)
-            print(datetime.datetime.now() - now)
-            if ed > len(df):
-                ed += remainder
-                flag = False
-            else:
-                st += quotient
-                ed += quotient
-            time.sleep(1.5)
-        print(">>", datetime.datetime.now() - now)
-        ct -= 1
-        st = 0
-        ed = quotient
-        flag = True
+    # ct = 9
+    ct = 1
+    try:
+        while ct:
+            now = datetime.datetime.now()
+            while flag:
+                df.to_sql('testdb02', engine, if_exists='append', method="multi")
+                # print(df[st:ed], datetime.datetime.now() - now)
+                print(datetime.datetime.now() - now)
+                if ed > len(df):
+                    ed += remainder
+                    flag = False
+                else:
+                    st += quotient
+                    ed += quotient
+                time.sleep(1.5)
+            print(">>", datetime.datetime.now() - now)
+            ct -= 1
+            st = 0
+            ed = quotient
+            flag = True
+    except Exception as e:
+        raise e
+    finally:
+        print(">>>>> Exit")
+        sys.exit()
 
     """ Using MultiProcessing Pool """
     # st = 0
