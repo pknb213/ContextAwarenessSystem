@@ -11,8 +11,8 @@ from sqlalchemy import create_engine
 from multiprocessing import Process, Pool, cpu_count
 
 pymysql.install_as_MySQLdb()
-# engine = create_engine("mysql+mysqldb://user:" + "1234" + "@localhost/test2",pool_recycle=300, encoding='utf-8')
-engine = create_engine("mysql+mysqldb://inventory_admin:"+"nrmk2013"+"@13.209.42.91/indycare", encoding='utf-8')
+engine = create_engine("mysql+mysqldb://user:" + "1234" + "@localhost/test2",pool_recycle=300, encoding='utf-8')
+# engine = create_engine("mysql+mysqldb://inventory_admin:"+"nrmk2013"+"@13.209.42.91/indycare", encoding='utf-8')
 conn = engine.connect()
 
 
@@ -89,8 +89,8 @@ def timer(start):
 
 def writeFunc():
     filename = "Ysang"
-    # path = 'C:\\Users\\CheonYoungJo\\Downloads\\%s.log' % filename
-    path = '.\\%s.log' % filename
+    path = 'C:\\Users\\CheonYoungJo\\Downloads\\%s.log' % filename
+    # path = '.\\%s.log' % filename
     res = {}
     now = datetime.datetime.now()
     with open(path, 'r') as logData:
@@ -132,8 +132,8 @@ def writeFunc():
 
     df = pd.DataFrame.from_dict(res, orient='index')
     df_len = len(df)
-    quotient = df_len // 20
-    remainder = df_len % 20
+    quotient = df_len // 30
+    remainder = df_len % 30
     print(df_len, quotient, remainder)
     print(datetime.datetime.now() - now, " from_dict 완료.")
 
@@ -147,9 +147,9 @@ def writeFunc():
         while ct:
             now = datetime.datetime.now()
             while flag:
-                df.to_sql('testdb02', engine, if_exists='append', method="multi")
+                df.to_sql('testdb02', engine, if_exists='append')
                 # print(df[st:ed], datetime.datetime.now() - now)
-                print(datetime.datetime.now() - now)
+                print(datetime.datetime.now() - now, ed, "/", df_len, "완료")
                 if ed > len(df):
                     ed += remainder
                     flag = False
