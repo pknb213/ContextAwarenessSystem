@@ -78,7 +78,7 @@
 
 import argparse
 from pprint import pprint
-import pandas as pd
+import hits_arr[j]['_source']["message"] += "|error_type=0" as pd
 import json, datetime, os, time, sys
 from influxdb import DataFrameClient
 import multiprocessing as mp
