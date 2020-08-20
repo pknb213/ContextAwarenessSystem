@@ -1,0 +1,15 @@
+@startuml
+autonumber
+skinparam SequenceMessageAlign center
+skinparam ParticipantPadding 60
+participant App
+participant API_GW
+participant 상황인지시스템
+
+상황인지시스템 -> API_GW : Push 발송 Request
+activate API_GW
+API_GW ->> App : Push Request
+API_GW --> 상황인지시스템 : Push 발송 Response
+deactivate API_GW
+
+@enduml

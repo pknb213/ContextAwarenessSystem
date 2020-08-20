@@ -1,0 +1,13 @@
+@startuml
+autonumber
+skinparam SequenceMessageAlign center
+skinparam ParticipantPadding 60
+skinparam responseMessageBelowArrow true
+participant App
+participant 상황인지시스템
+
+App -> 상황인지시스템 : 메뉴얼 Request
+activate 상황인지시스템
+return 메뉴얼 Response
+deactivate 상황인지시스템
+@enduml
