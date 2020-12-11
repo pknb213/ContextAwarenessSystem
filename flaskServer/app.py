@@ -1,6 +1,6 @@
 from utils import *
 from apis import *
-from heartbeat import *
+from batch import *
 
 
 if __name__ == '__main__':
