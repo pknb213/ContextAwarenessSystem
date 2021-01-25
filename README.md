@@ -1,1 +1,1 @@
-Context Awereness System
+Context Awareness System
