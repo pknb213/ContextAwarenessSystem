@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>PDF 리더기 뷰어</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.min.js"
+            integrity="sha512-i+UmpoqoJqHkpXQ3mQfaIF8UZ2RAGoyqJvMzAKTadhBVhRk883EHluxdPsMf7c5/43D5tVpwIE8KLE1kQa0uCg=="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.worker.min.js"
+            integrity="sha512-NuVK4+sDE809oDhbdAABRO1nTe80t56vXda8dg1UQ+RcQ8x7WakwTzKE7LOosoNCKi7EH7FXo7mritFNWpZiLQ=="
+            crossorigin="anonymous"></script>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    ol, ul {
+        list-style: none;
+    }
+
+    a {
+        text-decoration: none;
+    }
+
+    .wrap {
+        margin: 0 auto;
+    }
+
+    .header .h_container {
+        position: relative;
+        height: 56px;
+        overflow: hidden;
+    }
+
+    .header .h_container .title {
+        line-height: 56px;
+        font-size: 21px;
+        float: left;
+    }
+
+    .header .h_container .backBtn {
+        float: left;
+        height: 100%;
+    }
+
+    .header .h_container .backBtn img {
+        width: 22px;
+        margin: 16px 10px 0px 10px;
+    }
+
+    .header .h_container .viewBtn {
+        position: absolute;
+        top: 16px;
+        right: 10px;
+    }
+
+    .header .h_container .viewBtn .viewall {
+        display: block;
+        width: 70px;
+        line-height: 30px;
+        background-color: #eee;
+        border-radius: 15px;
+        margin-right: 10px;
+        font-size: 14px;
+        text-align: center;
+        color: #555;
+    }
+
+    .footer .f_nav {
+        overflow: hidden;
+        background-color: #222;
+        position: relative;
+    }
+
+    .footer .f_nav::after {
+        content: "";
+        display: block;
+        width: 2px;
+        height: 16px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -8px;
+        background-color: #999;
+    }
+
+    .footer .f_nav li {
+        float: left;
+        width: 50%;
+        text-align: center;
+    }
+
+    .footer .f_nav li a {
+        display: block;
+        width: 100%;
+        line-height: 56px;
+        color: #fff;
+    }
+
+    .footer .f_nav li button {
+        display: block;
+        width: 100%;
+        line-height: 56px;
+        color: #fff;
+    }
+</style>
+<body>
+<div class="wrap">
+    <div class="header">
+        <div class="h_container">
+<!--            <a href="#" class="backBtn"><img src="/static/image/btn_title_back_nor-pre@3x.png" alt=""></a>-->
+<!--            <h1 class="title">{{title}}</h1>-->
+            <h1 class="title" style="text-align: right">Page: <span id="page_num"></span> / <span
+                    id="page_count"></span></h1>
+<!--            <div class="viewBtn"><a href="#" id="all_btn" class="viewall">전체보기</a></div>-->
+        </div>
+    </div>
+    <div class="section">
+        <canvas id="the-canvas"></canvas>
+    </div>
+    <div class="footer">
+        <ul class="f_nav">
+            <li><a id="prev">이전</a></li>
+            <li><a id="next">다음</a></li>
+        </ul>
+    </div>
+</div>
+<script type="text/javascript">
+    // window.EleswayPro.callMethod("send message");
+    window.EleswayPro.setWebViewPageTitle("{{title}}");
+
+    // If absolute URL from the remote server is provided, configure the CORS
+    // header on that server.
+    const url = '{{file}}';
+
+    // Loaded via <script> tag, create shortcut to access PDF.js exports.
+    let pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+    // The workerSrc property shall be specified.
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+
+    const page_arr = {{page_num}};
+    let pdfDoc = url,
+        pageIndex = 0,
+        pageNum = page_arr[pageIndex],
+        pageRendering = false,
+        pageNumPending = null,
+        scale = 1.0,
+        div_section = document.getElementById('section'),
+        canvas = document.getElementById('the-canvas'),
+        ctx = canvas.getContext('2d');
+
+    /**
+     * Get page info from document, resize canvas accordingly, and render page.
+     * @param num Page number.
+     */
+    function renderPage(num) {
+        pageRendering = true;
+        // Using promise to fetch the page
+        pdfDoc.getPage(num).then(function (page) {
+            let viewport = page.getViewport({scale: scale});
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            // Render PDF page into canvas context
+            let renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+            let renderTask = page.render(renderContext);
+
+            // Wait for rendering to finish
+            renderTask.promise.then(function () {
+                pageRendering = false;
+                if (pageNumPending !== null) {
+                    // New page rendering is pending
+                    renderPage(pageNumPending);
+                    pageNumPending = null;
+                }
+            });
+        });
+
+        // Update page counters
+        document.getElementById('page_num').textContent = num;
+    }
+
+    /**
+     * If another page rendering in progress, waits until the rendering is
+     * finised. Otherwise, executes rendering immediately.
+     */
+    function queueRenderPage(num) {
+        if (pageRendering) {
+            pageNumPending = num;
+        } else {
+            renderPage(num);
+        }
+    }
+
+    /**
+     * Displays previous page.
+     */
+    function onPrevPage() {
+        if (pageNum <= 1 || pageIndex === 0) {
+            window.EleswayPro.setWebViewPageLoadingMessage("해당 키워드의 첫 페이지입니다.");
+            return;
+        }
+        if (pageIndex - 1 <= page_arr.length - 1) {
+            pageIndex--;
+            pageNum = page_arr[pageIndex];
+            window.EleswayPro.setWebViewPageLoadingMessage("해당 키워드의 이전 페이지로 이동합니다.");
+            queueRenderPage(pageNum);
+        } else {ㅈ
+        }
+    }
+
+    document.getElementById('prev').addEventListener('click', onPrevPage);
+
+    /**
+     * Displays next page.
+     */
+    function onNextPage() {
+        if (pageNum >= pdfDoc.numPages) {
+            window.EleswayPro.setWebViewPageLoadingMessage("해당 키워드의 마지막 페이지입니다.");
+            return;
+        }
+        if (pageIndex + 1 <= page_arr.length - 1) {
+            pageIndex++;
+            pageNum = page_arr[pageIndex];
+            window.EleswayPro.setWebViewPageLoadingMessage("해당 키워드의 다음 페이지로 이동합니다.");
+            queueRenderPage(pageNum);
+        } else {
+        }
+    }
+
+    document.getElementById('next').addEventListener('click', onNextPage);
+
+    /**
+     * Asynchronously downloads PDF.
+     */
+    pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
+        pdfDoc = pdfDoc_;
+        document.getElementById('page_count').textContent = pdfDoc.numPages;
+
+        // Initial/first page rendering
+        renderPage(pageNum);
+    });
+
+    // 실행이 안되 ㅜㅁㅜ
+    function onAllPage() {
+        console.log("All Pages Please~");
+
+        function renderPage_(page) {
+            var viewport = page.getViewport(options.scale);
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            div_section.appendChild(canvas);
+
+            page.render(renderContext);
+        }
+
+        function renderPages_(pdfDoc_) {
+            for (var num = 1; num <= pdfDoc_.numPages; num++)
+                pdfDoc_.getPage(num).then(renderPage_);
+        }
+
+        pdfjsLib.disableWorker = true;
+        pdfjsLib.getDocument(url).then(renderPages_);
+    }
+
+    // document.getElementById('all_btn').addEventListener('click', onAllPage);
+
+</script>
+</body>
+</html>
