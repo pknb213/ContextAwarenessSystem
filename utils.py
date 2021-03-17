@@ -81,6 +81,15 @@ SELECT a.ca_id, a.model_name, a.interval_sec, a.ca_error_case, a.check_sensor,
 a.check_operator, a.check_threshold, a.noti_title, a.noti_description, b.pdf_id, b.pdf_url, a.pdf_page_list 
 FROM elesway_dev.t_ca_case a,elesway_dev.t_ca_pdf_info b WHERE a.model_name = '{model}' AND a.model_name = b.model_name ORDER BY b.model_name'''
 
+# Maria DB Info
+CONFIG = {
+    "user": "eleswaydev",
+    "password": "elesway123$",
+    "host": "218.55.23.199",
+    "port": 3306,
+    "database": "elesway_dev"
+}
+
 
 # Logging APIs
 def log(req, msg, st):
